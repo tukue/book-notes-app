@@ -1,0 +1,23 @@
+<% var bodyContent = `
+  <h1>Books</h1>
+  <form id="bookForm">
+    <input type="text" name="title" placeholder="Title" required>
+    <input type="text" name="author" placeholder="Author" required>
+    <input type="number" name="rating" placeholder="Rating" min="1" max="5" required>
+    <textarea name="notes" placeholder="Notes"></textarea>
+    <button type="submit">Add Book</button>
+  </form>
+  <ul>
+    <% books.forEach(book => { %>
+      <li>
+        <strong>Title:</strong> <%= book.title %><br>
+        <strong>Author:</strong> <%= book.author %><br>
+        <strong>Rating:</strong> <%= book.rating %><br>
+        <strong>Notes:</strong> <%= book.notes %>
+        <button class="delete-button" data-book-id="<%= book.id %>">Delete</button>
+      </li>
+    <% }) %>
+  </ul>
+  <a href="/">Back to Home</a>
+`; %>
+<%- include('layout', { body: bodyContent }) %>
