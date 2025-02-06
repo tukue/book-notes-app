@@ -125,20 +125,6 @@ src/
 3. **Set up the database:**
    - Create a PostgreSQL database named `book_notes_db`.
    - Update the [`.env`](.env ) file with your database connection string:
-     ```properties
-     DATABASE_URL=postgres://<username>:<password>@localhost:5432/book_notes_db
-     ```
-
-4. **Create the [`books`](src/controllers/booksController.js ) table:**
-   ```sql
-   CREATE TABLE books (
-     id SERIAL PRIMARY KEY,
-     title VARCHAR(255) NOT NULL,
-     author VARCHAR(255) NOT NULL,
-     rating INTEGER,
-     notes TEXT
-   );
-   ```
 
 ### Running the Application
 1. **Start the server:**
@@ -179,5 +165,5 @@ The application includes error handling for both server-side and client-side ope
 - **EJS:** Templating engine for generating HTML with embedded JavaScript.
 - **Axios:** Promise-based HTTP client for making API requests.
 
-## Contributing
+
 
