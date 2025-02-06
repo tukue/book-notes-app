@@ -45,5 +45,139 @@
 
 1. **Clone the repository:**
    ```sh
+   git clone 
+   cd book-notes-app  
+
+   Technologies used :
+
+   Let's update the README to include the backend and frontend tech stack details.
+
+### Updated 
+
+README.md
+
+
+```markdown
+# Book Notes Capstone Project
+
+## Overview
+The Book Notes application is a web-based project that allows users to manage their book notes. Users can add, view, update, and delete book entries. The application uses PostgreSQL for data persistence and integrates with the Open Library Covers API to fetch book covers.
+
+## Features
+- **CRUD Operations:** Create, Read, Update, and Delete book entries.
+- **API Integration:** Fetch book covers using the Open Library Covers API.
+- **Data Persistence:** Store book data in a PostgreSQL database.
+- **User-Friendly Interface:** Use EJS for templating and a clean, responsive design.
+
+## Project Structure
+```
+.env
+.gitignore
+config/
+  database.js
+
+
+package.json
+
+
+public/
+  css/
+    styles.css
+  js/
+    scripts.js
+
+
+README.md
+
+
+src/
+  app.js
+  controllers/
+    booksController.js
+  models/
+    bookModel.js
+  routes/
+    booksRoutes.js
+  views/
+    book.ejs
+    index.ejs
+    layout.ejs
+```
+
+## Setup Instructions
+
+### Prerequisites
+- Node.js
+- PostgreSQL
+
+### Installation
+1. **Clone the repository:**
+   ```sh
    git clone <repository-url>
    cd book-notes-app
+   ```
+
+2. **Install dependencies:**
+   ```sh
+   npm install
+   ```
+
+3. **Set up the database:**
+   - Create a PostgreSQL database named `book_notes_db`.
+   - Update the [`.env`](.env ) file with your database connection string:
+     ```properties
+     DATABASE_URL=postgres://<username>:<password>@localhost:5432/book_notes_db
+     ```
+
+4. **Create the [`books`](src/controllers/booksController.js ) table:**
+   ```sql
+   CREATE TABLE books (
+     id SERIAL PRIMARY KEY,
+     title VARCHAR(255) NOT NULL,
+     author VARCHAR(255) NOT NULL,
+     rating INTEGER,
+     notes TEXT
+   );
+   ```
+
+### Running the Application
+1. **Start the server:**
+   ```sh
+   npm start
+   ```
+
+2. **Open your browser and navigate to:**
+   ```
+   http://localhost:5000
+   ```
+
+## Usage
+- **Add a Book:** Fill out the form with the book's title, author, rating, and notes, then click "Add Book".
+- **View Books:** Click "View Books" on the home page to see a list of all books.
+- **Update a Book:** Click the "Edit" button next to a book entry, update the details, and save.
+- **Delete a Book:** Click the "Delete" button next to a book entry to remove it from the list.
+
+## API Integration
+The application integrates with the Open Library Covers API to fetch book covers. This is done using Axios to send HTTP requests and handle responses.
+
+## Error Handling
+The application includes error handling for both server-side and client-side operations. Errors are logged to the console, and user-relevant errors are displayed in the UI.
+
+## Technologies Used
+
+### Backend
+- **Node.js:** JavaScript runtime for building server-side applications.
+- **Express.js:** Web framework for Node.js.
+- **PostgreSQL:** Relational database for storing book data.
+- **pg:** PostgreSQL client for Node.js.
+- **dotenv:** Module for loading environment variables 
+
+### Frontend
+- **HTML:** Markup language for creating web pages.
+- **CSS:** Stylesheet language for designing web pages.
+- **JavaScript:** Programming language for creating interactive web pages.
+- **EJS:** Templating engine for generating HTML with embedded JavaScript.
+- **Axios:** Promise-based HTTP client for making API requests.
+
+## Contributing
+
