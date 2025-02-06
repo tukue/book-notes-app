@@ -4,6 +4,7 @@ const getAllBooks = async (req, res) => {
   try {
     const books = await bookModel.getAllBooks();
     res.render('book', { books });
+    console.log("books in controller", books);
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
