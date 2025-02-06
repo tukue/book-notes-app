@@ -26,4 +26,28 @@ li {
   margin: 10px 0;
   padding: 10px;
   border: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+}
+
+li img {
+  margin-right: 20px;
+  max-width: 100px;
+  height: auto;
+}
+
+li div {
+  flex: 1;
+}
+
+button.delete-button {
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+button.delete-button:hover {
+  background: #c0392b;
 }
