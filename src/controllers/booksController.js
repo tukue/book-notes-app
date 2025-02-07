@@ -45,9 +45,21 @@ const deleteBook = async (req, res) => {
   }
 };
 
+const getBooksSorted = async (req, res) => {
+  const { sortBy } = req.query;
+  try {
+    const books = await bookModel.getBooksSorted(sortBy);
+    res.render('book', { books });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+};
+
 module.exports = {
   getAllBooks,
   addBook,
   updateBook,
   deleteBook,
+  getBooksSorted,
 };

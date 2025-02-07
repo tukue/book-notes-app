@@ -94,9 +94,39 @@ const deleteBook = async (id) => {
   }
 };
 
+// Get books sorted by rating or recency
+const getBooksSorted = async (sortBy) => {
+  let query;
+  if (sortBy === 'rating') {
+    query = 'SELECT * FROM books ORDER BY rating DESC';
+  } else if (sortBy === 'recency') {
+    query = 'SELECT * FROM books ORDER BY id DESC';
+  } else {
+    query = 'SELECT * FROM books';
+  }
+
+  try {
+    console.log('Executing query:', query);
+    const result = await pool.query(query);
+    console.log('Query result:', result.rows);
+    const books = result.rows;
+
+    for (const book of books) {
+      const coverUrl = await fetchBookCover(book.title);
+      book.coverUrl = coverUrl;
+    }
+    console.log('Updated books:', books);
+    return books;
+  } catch (err) {
+    console.error('Error getting sorted books', err);
+    throw err;
+  }
+};
+
 module.exports = {
   getAllBooks,
   addBook,
   updateBook,
   deleteBook,
+  getBooksSorted,
 };
