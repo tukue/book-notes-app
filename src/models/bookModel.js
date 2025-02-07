@@ -52,7 +52,6 @@ const addBook = async (title, author, rating, notes) => {
     console.log('Executing query:', query, 'with values:', values);
     const result = await pool.query(query, values);
     console.log('Query result:', result.rows[0]);
-    console.log('Book added:', result.rows[0]);
     return result.rows[0];
   } catch (err) {
     console.error('Error adding new book', err);

@@ -15,7 +15,8 @@ describe('Books API', () => {
 
     const response = await request(app).get('/books');
     expect(response.status).toBe(200);
-    expect(response.body).toEqual(mockBooks);
+    expect(response.text).toContain('Test Book 1');
+    expect(response.text).toContain('Test Book 2');
   });
 
   it('should add a new book', async () => {
@@ -28,13 +29,16 @@ describe('Books API', () => {
     booksModel.addBook.mockResolvedValue(newBook);
 
     const response = await request(app).post('/books').send(newBook);
-    expect(response.status).toBe(201);
-    expect(response.body.message).toBe('Book added successfully');
-    expect(response.body.book).toEqual(newBook);
+    expect(response.status).toBe(302); // Expecting a redirect status code
+    // Follow the redirect and check the final response
+    const redirectResponse = await request(app).get(response.headers.location);
+    expect(redirectResponse.status).toBe(200);
+    expect(redirectResponse.text).toContain('Test Book');
   });
 
   it('should update a book', async () => {
     const updatedBook = {
+      id: 1,
       title: 'Updated Test Book',
       author: 'Updated Test Author',
       rating: 4,
@@ -43,16 +47,20 @@ describe('Books API', () => {
     booksModel.updateBook.mockResolvedValue(updatedBook);
 
     const response = await request(app).put('/books/1').send(updatedBook);
-    expect(response.status).toBe(200);
-    expect(response.body.message).toBe('Book updated successfully');
-    expect(response.body.book).toEqual(updatedBook);
+    expect(response.status).toBe(302); // Expecting a redirect status code
+    // Follow the redirect and check the final response
+    const redirectResponse = await request(app).get(response.headers.location);
+    expect(redirectResponse.status).toBe(200);
   });
 
   it('should delete a book', async () => {
     booksModel.deleteBook.mockResolvedValue({});
 
     const response = await request(app).delete('/books/1');
-    expect(response.status).toBe(200);
-    expect(response.body.message).toBe('Book deleted successfully');
+    expect(response.status).toBe(302); // Expecting a redirect status code
+    // Follow the redirect and check the final response
+    const redirectResponse = await request(app).get(response.headers.location);
+    expect(redirectResponse.status).toBe(200);
+  
   });
 });
