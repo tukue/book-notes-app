@@ -4,7 +4,8 @@
   "description": "A capstone project for managing book notes.",
   "main": "src/app.js",
   "scripts": {
-    "start": "node src/app.js"
+    "start": "node src/app.js",
+    "test": "jest"
   },
   "dependencies": {
     "axios": "^0.21.4",
@@ -17,5 +18,9 @@
   },
   "author": "Tukue",
   "license": "",
-  "keywords": []
+  "keywords": [],
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
+  }
 }
