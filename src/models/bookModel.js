@@ -22,6 +22,28 @@ const getAllBooks = async () => {
   }
 };
 
+// Get books with pagination
+const getBooksPaginated = async (limit, offset) => {
+  const query = 'SELECT * FROM books LIMIT $1 OFFSET $2';
+  const values = [limit, offset];
+  try {
+    console.log('Executing query:', query, 'with values:', values);
+    const result = await pool.query(query, values);
+    console.log('Query result:', result.rows);
+    const books = result.rows;
+
+    for (const book of books) {
+      const coverUrl = await fetchBookCover(book.title);
+      book.coverUrl = coverUrl;
+    }
+    console.log('Updated books:', books);
+    return books;
+  } catch (err) {
+    console.error('Error getting books with pagination', err);
+    throw err;
+  }
+};
+
 // Fetch book cover from Open Library Covers API
 const fetchBookCover = async (title) => {
   try {
@@ -125,6 +147,7 @@ const getBooksSorted = async (sortBy) => {
 
 module.exports = {
   getAllBooks,
+  getBooksPaginated,
   addBook,
   updateBook,
   deleteBook,

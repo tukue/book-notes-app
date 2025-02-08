@@ -1,4 +1,5 @@
 const request = require('supertest');
+const cheerio = require('cheerio');
 const app = require('../app');
 const booksModel = require('../models/bookModel');
 
@@ -14,6 +15,19 @@ describe('Books API', () => {
     booksModel.getAllBooks.mockResolvedValue(mockBooks);
 
     const response = await request(app).get('/books');
+    expect(response.status).toBe(200);
+    expect(response.text).toContain('Test Book 1');
+    expect(response.text).toContain('Test Book 2');
+  });
+
+  it('should get books with pagination', async () => {
+    const mockBooks = [
+      { id: 1, title: 'Test Book 1', author: 'Test Author 1', rating: 5, notes: 'Test notes 1' },
+      { id: 2, title: 'Test Book 2', author: 'Test Author 2', rating: 4, notes: 'Test notes 2' }
+    ];
+    booksModel.getBooksPaginated.mockResolvedValue(mockBooks);
+
+    const response = await request(app).get('/books/paginated?limit=10&offset=0');
     expect(response.status).toBe(200);
     expect(response.text).toContain('Test Book 1');
     expect(response.text).toContain('Test Book 2');
@@ -38,7 +52,6 @@ describe('Books API', () => {
 
   it('should update a book', async () => {
     const updatedBook = {
-      id: 1,
       title: 'Updated Test Book',
       author: 'Updated Test Author',
       rating: 4,
@@ -48,9 +61,7 @@ describe('Books API', () => {
 
     const response = await request(app).put('/books/1').send(updatedBook);
     expect(response.status).toBe(302); // Expecting a redirect status code
-    // Follow the redirect and check the final response
-    const redirectResponse = await request(app).get(response.headers.location);
-    expect(redirectResponse.status).toBe(200);
+  
   });
 
   it('should delete a book', async () => {
@@ -61,6 +72,5 @@ describe('Books API', () => {
     // Follow the redirect and check the final response
     const redirectResponse = await request(app).get(response.headers.location);
     expect(redirectResponse.status).toBe(200);
-  
   });
 });

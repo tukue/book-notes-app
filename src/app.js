@@ -22,7 +22,7 @@ app.get('/', (req, res) => {
   res.render('index'); // No need to specify layout here, it's already set globally
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5005;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 }); 
