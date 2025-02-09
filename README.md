@@ -66,4 +66,22 @@ The Book Notes application is a web-based project that allows users to manage th
 - **Axios:** Promise-based HTTP client for making API requests.
 
 
+Diagram of the CRUD application :
+ 
+
++-------+          +-------------------+          +-------------------+          +-------------------+
+| User  |  --->    | Frontend (JS)     |  --->    | Backend (Express) |  --->    | Database (PostgreSQL) |
++-------+          +-------------------+          +-------------------+          +-------------------+
+    |                   |                       |                       |
+    |                   |                       |                       |
+    v                   v                       v                       v
++-------+          +-------------------+          +-------------------+          +-------------------+
+| Input |  --->    | HTTP Request      |  --->    | Controller        |  --->    | Query db  |
++-------+          +-------------------+          +-------------------+          +-------------------+
+    |                   |                       |                       |
+    |                   |                       |                       |
+    v                   v                       v                       v
++-------+          +-------------------+          +-------------------+          +-------------------+
+| Output|  <---    | HTTP Response     |  <---    | Controller        |  <---    | Query Result      |
++-------+          +-------------------+          +-------------------+          +-------------------+
 
