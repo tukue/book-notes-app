@@ -1,23 +1,41 @@
 const axios = require('axios');
 const pool = require('../../config/database');
 
+// Helper function to fetch book cover from Open Library Covers API
+const fetchBookCover = async (title) => {
+  try {
+    const response = await axios.get(`https://openlibrary.org/search.json?title=${encodeURIComponent(title)}`);
+    if (response.status === 200 && response.data.docs && response.data.docs.length > 0) {
+      const coverId = response.data.docs[0].cover_i;
+      if (coverId) {
+        return `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`;
+      }
+    }
+    return null;
+  } catch (err) {
+    console.error('Error fetching book cover:', err);
+    return null;
+  }
+};
+
 // Get all books
 const getAllBooks = async () => {
   const query = 'SELECT * FROM books';
   try {
     console.log('Executing query:', query);
     const result = await pool.query(query);
-    console.log('Query result:', result.rows);
     const books = result.rows;
 
-    for (const book of books) {
+    // Fetch cover URLs for all books in parallel
+    const booksWithCovers = await Promise.all(books.map(async (book) => {
       const coverUrl = await fetchBookCover(book.title);
-      book.coverUrl = coverUrl;
-    }
-    console.log('Updated books:', books);
-    return books;
+      return { ...book, coverUrl };
+    }));
+
+    console.log('Updated books:', booksWithCovers);
+    return booksWithCovers;
   } catch (err) {
-    console.error('Error getting all books', err);
+    console.error('Error getting all books:', err);
     throw err;
   }
 };
@@ -29,36 +47,19 @@ const getBooksPaginated = async (limit, offset) => {
   try {
     console.log('Executing query:', query, 'with values:', values);
     const result = await pool.query(query, values);
-    console.log('Query result:', result.rows);
     const books = result.rows;
 
-    for (const book of books) {
+    // Fetch cover URLs for all books in parallel
+    const booksWithCovers = await Promise.all(books.map(async (book) => {
       const coverUrl = await fetchBookCover(book.title);
-      book.coverUrl = coverUrl;
-    }
-    console.log('Updated books:', books);
-    return books;
-  } catch (err) {
-    console.error('Error getting books with pagination', err);
-    throw err;
-  }
-};
+      return { ...book, coverUrl };
+    }));
 
-// Fetch book cover from Open Library Covers API
-const fetchBookCover = async (title) => {
-  try {
-    const response = await axios.get(`https://openlibrary.org/search.json?title=${encodeURIComponent(title)}`);
-    if (response.status === 200 && response.data.docs && response.data.docs.length > 0) {
-      const coverId = response.data.docs[0].cover_i;
-      console.log('Cover ID:', coverId);
-      if (coverId) {
-        return `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`;
-      }
-    }
-    return null;
+    console.log('Updated books:', booksWithCovers);
+    return booksWithCovers;
   } catch (err) {
-    console.error('Error fetching book cover', err);
-    return null;
+    console.error('Error getting books with pagination:', err);
+    throw err;
   }
 };
 
@@ -76,7 +77,7 @@ const addBook = async (title, author, rating, notes) => {
     console.log('Query result:', result.rows[0]);
     return result.rows[0];
   } catch (err) {
-    console.error('Error adding new book', err);
+    console.error('Error adding new book:', err);
     throw err;
   }
 };
@@ -96,7 +97,7 @@ const updateBook = async (id, title, author, rating, notes) => {
     console.log('Query result:', result.rows[0]);
     return result.rows[0];
   } catch (err) {
-    console.error('Error updating book', err);
+    console.error('Error updating book:', err);
     throw err;
   }
 };
@@ -111,7 +112,7 @@ const deleteBook = async (id) => {
     console.log('Query result:', result.rows[0]);
     return result.rows[0];
   } catch (err) {
-    console.error('Error deleting book', err);
+    console.error('Error deleting book:', err);
     throw err;
   }
 };
@@ -130,17 +131,18 @@ const getBooksSorted = async (sortBy) => {
   try {
     console.log('Executing query:', query);
     const result = await pool.query(query);
-    console.log('Query result:', result.rows);
     const books = result.rows;
 
-    for (const book of books) {
+    // Fetch cover URLs for all books in parallel
+    const booksWithCovers = await Promise.all(books.map(async (book) => {
       const coverUrl = await fetchBookCover(book.title);
-      book.coverUrl = coverUrl;
-    }
-    console.log('Updated books:', books);
-    return books;
+      return { ...book, coverUrl };
+    }));
+
+    console.log('Updated books:', booksWithCovers);
+    return booksWithCovers;
   } catch (err) {
-    console.error('Error getting sorted books', err);
+    console.error('Error getting sorted books:', err);
     throw err;
   }
 };
