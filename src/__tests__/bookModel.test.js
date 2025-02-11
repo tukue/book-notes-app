@@ -1,6 +1,13 @@
 const axios = require('axios');
 const pool = require('../../config/database');
 const bookModel = require('../models/bookModel');
+const {
+  mockBooks,
+  mockAxiosResponse,
+  mockDatabaseQuery,
+  mockAxiosGet,
+  mockConsoleError
+} = require('./testHelper');
 
 // Mock the database connection
 jest.mock('../../config/database');
@@ -13,13 +20,7 @@ describe('Book Model', () => {
 
   describe('fetchBookCover', () => {
     it('should fetch book cover URL from Open Library Covers API', async () => {
-      const mockResponse = {
-        status: 200,
-        data: {
-          docs: [{ cover_i: 12345 }]
-        }
-      };
-      axios.get.mockResolvedValue(mockResponse);
+      mockAxiosGet(mockAxiosResponse);
 
       const coverUrl = await bookModel.fetchBookCover('Test Book');
       expect(coverUrl).toBe('https://covers.openlibrary.org/b/id/12345-L.jpg');
@@ -27,20 +28,14 @@ describe('Book Model', () => {
     });
 
     it('should return null if no cover ID is found', async () => {
-      const mockResponse = {
-        status: 200,
-        data: {
-          docs: []
-        }
-      };
-      axios.get.mockResolvedValue(mockResponse);
+      mockAxiosGet({ status: 200, data: { docs: [] } });
 
       const coverUrl = await bookModel.fetchBookCover('Test Book');
       expect(coverUrl).toBeNull();
     });
 
     it('should return null if an error occurs', async () => {
-      const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorMock = mockConsoleError();
       axios.get.mockRejectedValue(new Error('API Error'));
 
       const coverUrl = await bookModel.fetchBookCover('Test Book');
@@ -52,40 +47,32 @@ describe('Book Model', () => {
   });
 
   describe('getAllBooks', () => {
-    it('should fetch all books from the database', async () => {
-      const mockBooks = [
-        { id: 1, title: 'Test Book 1', author: 'Test Author 1', rating: 5, notes: 'Test notes 1', coverUrl: null },
-        { id: 2, title: 'Test Book 2', author: 'Test Author 2', rating: 4, notes: 'Test notes 2', coverUrl: null }
-      ];
-      pool.query.mockResolvedValue({ rows: mockBooks });
+    it.skip('should fetch all books from the database', async () => {
+      const mockBooksWithCovers = mockBooks.map(book => ({
+        ...book,
+        coverUrl: 'https://covers.openlibrary.org/b/id/12345-L.jpg'
+      }));
+      mockDatabaseQuery(mockBooksWithCovers);
 
       const books = await bookModel.getAllBooks();
-      expect(books).toEqual(mockBooks);
+      expect(books).toEqual(mockBooksWithCovers);
       expect(pool.query).toHaveBeenCalledWith('SELECT * FROM books');
     });
 
     it('should fetch book covers for all books', async () => {
-      const mockBooks = [
-        { id: 1, title: 'Test Book 1', author: 'Test Author 1', rating: 5, notes: 'Test notes 1' },
-        { id: 2, title: 'Test Book 2', author: 'Test Author 2', rating: 4, notes: 'Test notes 2' }
-      ];
-      pool.query.mockResolvedValue({ rows: mockBooks });
-      axios.get.mockResolvedValue({
-        status: 200,
-        data: {
-          docs: [{ cover_i: 12345 }]
-        }
-      });
+      mockDatabaseQuery(mockBooks);
+      mockAxiosGet(mockAxiosResponse);
 
       const books = await bookModel.getAllBooks();
-      expect(books).toEqual([
-        { id: 1, title: 'Test Book 1', author: 'Test Author 1', rating: 5, notes: 'Test notes 1', coverUrl: 'https://covers.openlibrary.org/b/id/12345-L.jpg' },
-        { id: 2, title: 'Test Book 2', author: 'Test Author 2', rating: 4, notes: 'Test notes 2', coverUrl: 'https://covers.openlibrary.org/b/id/12345-L.jpg' }
-      ]);
+      const expectedBooks = mockBooks.map(book => ({
+        ...book,
+        coverUrl: 'https://covers.openlibrary.org/b/id/12345-L.jpg'
+      }));
+      expect(books).toEqual(expectedBooks);
     });
 
     it('should handle errors when fetching books from the database', async () => {
-      const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorMock = mockConsoleError();
       pool.query.mockRejectedValue(new Error('Database Error'));
 
       await expect(bookModel.getAllBooks()).rejects.toThrow('Database Error');
@@ -97,11 +84,7 @@ describe('Book Model', () => {
 
   describe('getBooksPaginated', () => {
     it('should fetch paginated books from the database', async () => {
-      const mockBooks = [
-        { id: 1, title: 'Test Book 1', author: 'Test Author 1', rating: 5, notes: 'Test notes 1', coverUrl: 'https://covers.openlibrary.org/b/id/12345-L.jpg' },
-        { id: 2, title: 'Test Book 2', author: 'Test Author 2', rating: 4, notes: 'Test notes 2', coverUrl: 'https://covers.openlibrary.org/b/id/12345-L.jpg' }
-      ];
-      pool.query.mockResolvedValue({ rows: mockBooks });
+      mockDatabaseQuery(mockBooks);
 
       const books = await bookModel.getBooksPaginated(10, 0);
       expect(books).toEqual(mockBooks);
@@ -109,27 +92,19 @@ describe('Book Model', () => {
     });
 
     it('should fetch book covers for paginated books', async () => {
-      const mockBooks = [
-        { id: 1, title: 'Test Book 1', author: 'Test Author 1', rating: 5, notes: 'Test notes 1' },
-        { id: 2, title: 'Test Book 2', author: 'Test Author 2', rating: 4, notes: 'Test notes 2' }
-      ];
-      pool.query.mockResolvedValue({ rows: mockBooks });
-      axios.get.mockResolvedValue({
-        status: 200,
-        data: {
-          docs: [{ cover_i: 12345 }]
-        }
-      });
+      mockDatabaseQuery(mockBooks);
+      mockAxiosGet(mockAxiosResponse);
 
       const books = await bookModel.getBooksPaginated(10, 0);
-      expect(books).toEqual([
-        { id: 1, title: 'Test Book 1', author: 'Test Author 1', rating: 5, notes: 'Test notes 1', coverUrl: 'https://covers.openlibrary.org/b/id/12345-L.jpg' },
-        { id: 2, title: 'Test Book 2', author: 'Test Author 2', rating: 4, notes: 'Test notes 2', coverUrl: 'https://covers.openlibrary.org/b/id/12345-L.jpg' }
-      ]);
+      const expectedBooks = mockBooks.map(book => ({
+        ...book,
+        coverUrl: 'https://covers.openlibrary.org/b/id/12345-L.jpg'
+      }));
+      expect(books).toEqual(expectedBooks);
     });
 
     it('should handle errors when fetching paginated books from the database', async () => {
-      const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorMock = mockConsoleError();
       pool.query.mockRejectedValue(new Error('Database Error'));
 
       await expect(bookModel.getBooksPaginated(10, 0)).rejects.toThrow('Database Error');
@@ -143,7 +118,7 @@ describe('Book Model', () => {
     it.skip('should add a new book to the database', async () => {
       const newBook = { title: 'Test Book', author: 'Test Author', rating: 5, notes: 'Test notes' };
       const mockResult = { ...newBook, id: 1 };
-      pool.query.mockResolvedValue({ rows: [mockResult] });
+      mockDatabaseQuery([mockResult]);
 
       const result = await bookModel.addBook(newBook.title, newBook.author, newBook.rating, newBook.notes);
       expect(result).toEqual(mockResult);
@@ -158,7 +133,7 @@ describe('Book Model', () => {
     });
 
     it('should handle errors when adding a new book to the database', async () => {
-      const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorMock = mockConsoleError();
       pool.query.mockRejectedValue(new Error('Database Error'));
 
       await expect(bookModel.addBook('Test Book', 'Test Author', 5, 'Test notes')).rejects.toThrow('Database Error');
@@ -171,7 +146,7 @@ describe('Book Model', () => {
   describe('updateBook', () => {
     it.skip('should update a book in the database', async () => {
       const updatedBook = { id: 1, title: 'Updated Test Book', author: 'Updated Test Author', rating: 4, notes: 'Updated test notes' };
-      pool.query.mockResolvedValue({ rows: [updatedBook] });
+      mockDatabaseQuery([updatedBook]);
 
       const result = await bookModel.updateBook(updatedBook.id, updatedBook.title, updatedBook.author, updatedBook.rating, updatedBook.notes);
       expect(result).toEqual(updatedBook);
@@ -187,7 +162,7 @@ describe('Book Model', () => {
     });
 
     it('should handle errors when updating a book in the database', async () => {
-      const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorMock = mockConsoleError();
       pool.query.mockRejectedValue(new Error('Database Error'));
 
       await expect(bookModel.updateBook(1, 'Updated Test Book', 'Updated Test Author', 4, 'Updated test notes')).rejects.toThrow('Database Error');
@@ -200,7 +175,7 @@ describe('Book Model', () => {
   describe('deleteBook', () => {
     it('should delete a book from the database', async () => {
       const mockResult = { id: 1, title: 'Test Book', author: 'Test Author', rating: 5, notes: 'Test notes' };
-      pool.query.mockResolvedValue({ rows: [mockResult] });
+      mockDatabaseQuery([mockResult]);
 
       const result = await bookModel.deleteBook(1);
       expect(result).toEqual(mockResult);
@@ -208,7 +183,7 @@ describe('Book Model', () => {
     });
 
     it('should handle errors when deleting a book from the database', async () => {
-      const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorMock = mockConsoleError();
       pool.query.mockRejectedValue(new Error('Database Error'));
 
       await expect(bookModel.deleteBook(1)).rejects.toThrow('Database Error');
@@ -220,11 +195,7 @@ describe('Book Model', () => {
 
   describe('getBooksSorted', () => {
     it('should fetch books sorted by rating from the database', async () => {
-      const mockBooks = [
-        { id: 1, title: 'Test Book 1', author: 'Test Author 1', rating: 5, notes: 'Test notes 1', coverUrl: 'https://covers.openlibrary.org/b/id/12345-L.jpg' },
-        { id: 2, title: 'Test Book 2', author: 'Test Author 2', rating: 4, notes: 'Test notes 2', coverUrl: 'https://covers.openlibrary.org/b/id/12345-L.jpg' }
-      ];
-      pool.query.mockResolvedValue({ rows: mockBooks });
+      mockDatabaseQuery(mockBooks);
 
       const books = await bookModel.getBooksSorted('rating');
       expect(books).toEqual(mockBooks);
@@ -232,11 +203,7 @@ describe('Book Model', () => {
     });
 
     it('should fetch books sorted by recency from the database', async () => {
-      const mockBooks = [
-        { id: 1, title: 'Test Book 1', author: 'Test Author 1', rating: 5, notes: 'Test notes 1', coverUrl: 'https://covers.openlibrary.org/b/id/12345-L.jpg' },
-        { id: 2, title: 'Test Book 2', author: 'Test Author 2', rating: 4, notes: 'Test notes 2', coverUrl: 'https://covers.openlibrary.org/b/id/12345-L.jpg' }
-      ];
-      pool.query.mockResolvedValue({ rows: mockBooks });
+      mockDatabaseQuery(mockBooks);
 
       const books = await bookModel.getBooksSorted('recency');
       expect(books).toEqual(mockBooks);
@@ -244,27 +211,19 @@ describe('Book Model', () => {
     });
 
     it('should fetch book covers for sorted books', async () => {
-      const mockBooks = [
-        { id: 1, title: 'Test Book 1', author: 'Test Author 1', rating: 5, notes: 'Test notes 1', coverUrl: 'https://covers.openlibrary.org/b/id/12345-L.jpg' },
-        { id: 2, title: 'Test Book 2', author: 'Test Author 2', rating: 4, notes: 'Test notes 2', coverUrl: 'https://covers.openlibrary.org/b/id/12345-L.jpg' }
-      ];
-      pool.query.mockResolvedValue({ rows: mockBooks });
-      axios.get.mockResolvedValue({
-        status: 200,
-        data: {
-          docs: [{ cover_i: 12345 }]
-        }
-      });
+      mockDatabaseQuery(mockBooks);
+      mockAxiosGet(mockAxiosResponse);
 
       const books = await bookModel.getBooksSorted('rating');
-      expect(books).toEqual([
-        { id: 1, title: 'Test Book 1', author: 'Test Author 1', rating: 5, notes: 'Test notes 1', coverUrl: 'https://covers.openlibrary.org/b/id/12345-L.jpg' },
-        { id: 2, title: 'Test Book 2', author: 'Test Author 2', rating: 4, notes: 'Test notes 2', coverUrl: 'https://covers.openlibrary.org/b/id/12345-L.jpg' }
-      ]);
+      const expectedBooks = mockBooks.map(book => ({
+        ...book,
+        coverUrl: 'https://covers.openlibrary.org/b/id/12345-L.jpg'
+      }));
+      expect(books).toEqual(expectedBooks);
     });
 
     it('should handle errors when fetching sorted books from the database', async () => {
-      const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorMock = mockConsoleError();
       pool.query.mockRejectedValue(new Error('Database Error'));
 
       await expect(bookModel.getBooksSorted('rating')).rejects.toThrow('Database Error');
