@@ -61,7 +61,10 @@ describe('Books API', () => {
 
     const response = await request(app).put('/books/1').send(updatedBook);
     expect(response.status).toBe(302); // Expecting a redirect status code
-  
+    // Follow the redirect and check the final response
+    const redirectResponse = await request(app).get(response.headers.location);
+    expect(redirectResponse.status).toBe(200);
+
   });
 
   it('should delete a book', async () => {

@@ -148,6 +148,7 @@ const getBooksSorted = async (sortBy) => {
 };
 
 module.exports = {
+  fetchBookCover,
   getAllBooks,
   getBooksPaginated,
   addBook,
