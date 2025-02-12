@@ -7,7 +7,7 @@ const {
   mockDatabaseQuery,
   mockAxiosGet,
   mockConsoleError
-} = require('./testHelper');
+} = require('./testHelper.helper');
 
 // Mock the database connection
 jest.mock('../../config/database');
@@ -47,17 +47,19 @@ describe('Book Model', () => {
   });
 
   describe('getAllBooks', () => {
-    it.skip('should fetch all books from the database', async () => {
+    it('should fetch all books from the database', async () => {
       const mockBooksWithCovers = mockBooks.map(book => ({
         ...book,
         coverUrl: 'https://covers.openlibrary.org/b/id/12345-L.jpg'
       }));
       mockDatabaseQuery(mockBooksWithCovers);
-
+      mockAxiosGet(mockAxiosResponse);
+    
       const books = await bookModel.getAllBooks();
       expect(books).toEqual(mockBooksWithCovers);
       expect(pool.query).toHaveBeenCalledWith('SELECT * FROM books');
     });
+    
 
     it('should fetch book covers for all books', async () => {
       mockDatabaseQuery(mockBooks);
@@ -114,23 +116,46 @@ describe('Book Model', () => {
     });
   });
 
-  describe('addBook', () => {
-    it.skip('should add a new book to the database', async () => {
-      const newBook = { title: 'Test Book', author: 'Test Author', rating: 5, notes: 'Test notes' };
-      const mockResult = { ...newBook, id: 1 };
-      mockDatabaseQuery([mockResult]);
+describe('addBook', () => {
+  it('should add a new book to the database', async () => {
+    const newBook = { 
+      title: 'Test Book', 
+      author: 'Test Author', 
+      rating: 5, 
+      notes: 'Test notes' 
+    };
+    const mockResult = { ...newBook, id: 1 };
+    
+    // Mock the database query
+    mockDatabaseQuery([mockResult]);
+    
+    // Mock the cover URL fetch
+    mockAxiosGet(mockAxiosResponse);
 
-      const result = await bookModel.addBook(newBook.title, newBook.author, newBook.rating, newBook.notes);
-      expect(result).toEqual(mockResult);
-      expect(pool.query).toHaveBeenCalledWith(
-        `
-        INSERT INTO books (title, author, rating, notes)
-        VALUES ($1, $2, $3, $4)
-        RETURNING *;
-      `,
-        [newBook.title, newBook.author, newBook.rating, newBook.notes]
-      );
+    const result = await bookModel.addBook(
+      newBook.title, 
+      newBook.author, 
+      newBook.rating, 
+      newBook.notes
+    );
+    
+    // Check the final result
+    expect(result).toEqual({
+      ...mockResult,
+      coverUrl: 'https://covers.openlibrary.org/b/id/12345-L.jpg'
     });
+    
+    // Verify the database query was called correctly
+    expect(pool.query).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO books'),
+      [newBook.title, newBook.author, newBook.rating, newBook.notes]
+    );
+    
+    // Verify the cover API was called
+    expect(axios.get).toHaveBeenCalledWith(
+      `https://openlibrary.org/search.json?title=${encodeURIComponent(newBook.title)}`
+    );
+  });
 
     it('should handle errors when adding a new book to the database', async () => {
       const consoleErrorMock = mockConsoleError();
@@ -144,33 +169,96 @@ describe('Book Model', () => {
   });
 
   describe('updateBook', () => {
-    it.skip('should update a book in the database', async () => {
-      const updatedBook = { id: 1, title: 'Updated Test Book', author: 'Updated Test Author', rating: 4, notes: 'Updated test notes' };
+    it('should update a book in the database', async () => {
+      // Setup test data
+      const updatedBook = {
+        id: 1,
+        title: 'Updated Test Book',
+        author: 'Updated Test Author',
+        rating: 4,
+        notes: 'Updated test notes'
+      };
+  
+      // Mock the database response
       mockDatabaseQuery([updatedBook]);
-
-      const result = await bookModel.updateBook(updatedBook.id, updatedBook.title, updatedBook.author, updatedBook.rating, updatedBook.notes);
-      expect(result).toEqual(updatedBook);
+  
+      // Mock the cover API response
+      mockAxiosGet({
+        status: 200,
+        data: {
+          docs: [{ cover_i: 12345 }]
+        }
+      });
+  
+      // Call the update function
+      const result = await bookModel.updateBook(
+        updatedBook.id,
+        updatedBook.title,
+        updatedBook.author,
+        updatedBook.rating,
+        updatedBook.notes
+      );
+  
+      // Verify the result includes both the updated book data and cover URL
+      expect(result).toEqual({
+        ...updatedBook,
+        coverUrl: 'https://covers.openlibrary.org/b/id/12345-L.jpg'
+      });
+  
+      // Verify the database query was called with correct parameters
       expect(pool.query).toHaveBeenCalledWith(
-        `
-        UPDATE books
-        SET title = $1, author = $2, rating = $3, notes = $4
-        WHERE id = $5
-        RETURNING *;
-      `,
-        [updatedBook.title, updatedBook.author, updatedBook.rating, updatedBook.notes, updatedBook.id]
+        expect.stringContaining('UPDATE books'),
+        [
+          updatedBook.title,
+          updatedBook.author,
+          updatedBook.rating,
+          updatedBook.notes,
+          updatedBook.id
+        ]
       );
     });
-
-    it('should handle errors when updating a book in the database', async () => {
-      const consoleErrorMock = mockConsoleError();
-      pool.query.mockRejectedValue(new Error('Database Error'));
-
-      await expect(bookModel.updateBook(1, 'Updated Test Book', 'Updated Test Author', 4, 'Updated test notes')).rejects.toThrow('Database Error');
-      expect(console.error).toHaveBeenCalledWith('Error updating book:', expect.any(Error));
-
-      consoleErrorMock.mockRestore();
+  
+    it('should handle errors when updating a book', async () => {
+      // Mock console.error to prevent error output in tests
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  
+      // Setup test data
+      const updatedBook = {
+        id: 1,
+        title: 'Updated Test Book',
+        author: 'Updated Test Author',
+        rating: 4,
+        notes: 'Updated test notes'
+      };
+  
+      // Mock database error
+      pool.query.mockRejectedValue(new Error('Database error'));
+  
+      // Verify that the error is properly thrown
+      await expect(bookModel.updateBook(
+        updatedBook.id,
+        updatedBook.title,
+        updatedBook.author,
+        updatedBook.rating,
+        updatedBook.notes
+      )).rejects.toThrow('Database error');
+  
+      // Verify that console.error was called with the correct message
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Error updating book:',
+        expect.any(Error)
+      );
+  
+      // Restore console.error
+      consoleErrorSpy.mockRestore();
+    });
+  
+    // Clean up after each test
+    afterEach(() => {
+      jest.clearAllMocks();
     });
   });
+  
 
   describe('deleteBook', () => {
     it('should delete a book from the database', async () => {

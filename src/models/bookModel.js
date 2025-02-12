@@ -64,6 +64,7 @@ const getBooksPaginated = async (limit, offset) => {
 };
 
 // Add a new book
+
 const addBook = async (title, author, rating, notes) => {
   const query = `
     INSERT INTO books (title, author, rating, notes)
@@ -72,17 +73,20 @@ const addBook = async (title, author, rating, notes) => {
   `;
   const values = [title, author, rating, notes];
   try {
-    console.log('Executing query:', query, 'with values:', values);
     const result = await pool.query(query, values);
-    console.log('Query result:', result.rows[0]);
-    return result.rows[0];
+    const book = result.rows[0];
+    
+    // Fetch cover URL for the newly added book
+    const coverUrl = await fetchBookCover(title);
+    return { ...book, coverUrl };
+    
   } catch (err) {
     console.error('Error adding new book:', err);
     throw err;
   }
 };
 
-// Update a book
+
 const updateBook = async (id, title, author, rating, notes) => {
   const query = `
     UPDATE books
@@ -92,15 +96,20 @@ const updateBook = async (id, title, author, rating, notes) => {
   `;
   const values = [title, author, rating, notes, id];
   try {
-    console.log('Executing query:', query, 'with values:', values);
     const result = await pool.query(query, values);
-    console.log('Query result:', result.rows[0]);
-    return result.rows[0];
+    const updatedBook = result.rows[0];
+    
+    // Fetch the cover URL for the updated book
+    const coverUrl = await fetchBookCover(title);
+    return { ...updatedBook, coverUrl };
+    
   } catch (err) {
     console.error('Error updating book:', err);
     throw err;
   }
 };
+
+
 
 // Delete a book
 const deleteBook = async (id) => {
