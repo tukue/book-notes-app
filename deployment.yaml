@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: book-notes-app
-        image: your-dockerhub-username/book-notes-app:latest
+        image: tukuegg/book-notes-app:latest
         ports:
         - containerPort: 5008
         env:
