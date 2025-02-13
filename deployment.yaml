@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: book-notes-app
+  labels:
+    app: book-notes-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: book-notes-app
+  template:
+    metadata:
+      labels:
+        app: book-notes-app
+    spec:
+      containers:
+      - name: book-notes-app
+        image: your-dockerhub-username/book-notes-app:latest
+        ports:
+        - containerPort: 5008
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: database-secret
+              key: DATABASE_URL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: book-notes-app-service
+spec:
+  selector:
+    app: book-notes-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5008
+  type: LoadBalancer
